@@ -1,0 +1,57 @@
+Sub CopyTransactionSummaryBlock()
+    Dim srcSheet As Worksheet
+    Dim destSheet As Worksheet
+    Dim srcRange As Range
+    Dim destRow As Long
+    Dim copyRange As Range
+    Dim copyEndRow As Long
+    Dim cell As Range
+    
+    ' Set the source sheet (the active sheet)
+    Set srcSheet = ActiveSheet
+    
+    ' Find the cell containing the text "Transaction Name" in the entire sheet
+    Set srcRange = srcSheet.Cells.Find(What:="Transaction Name", LookIn:=xlValues, LookAt:=xlWhole)
+    
+    If Not srcRange Is Nothing Then
+        ' Set the destination sheet (txsummary)
+        On Error Resume Next
+        Set destSheet = ThisWorkbook.Sheets("txsummary")
+        On Error GoTo 0
+        
+        If destSheet Is Nothing Then
+            ' Create a new sheet named "txsummary"
+            Set destSheet = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+            destSheet.Name = "txsummary"
+        End If
+        
+        ' Clear the contents of the destination sheet
+        destSheet.Cells.Clear
+        
+        ' Determine the end row of the range to copy
+        copyEndRow = srcRange.End(xlDown).Row
+        
+        ' Find the first empty row after "Transaction Name"
+        For destRow = srcRange.Row + 1 To copyEndRow
+            Set cell = srcSheet.Cells(destRow, srcRange.Column)
+            ' Trim the content and check if the cell is empty
+            If Trim(cell.Value) = "" Then
+                Exit For
+            End If
+        Next destRow
+        
+        ' Define the range to copy (from the row below the cell containing "Transaction Name" to the first empty row)
+        Set copyRange = srcSheet.Range(srcRange.Offset(1, 0), srcSheet.Cells(destRow - 1, srcRange.Column))
+        
+        If Not copyRange Is Nothing Then
+            ' Copy the data from the source sheet to the destination sheet
+            copyRange.Copy destSheet.Cells(1, 1)
+            
+            MsgBox "Transaction summary copied successfully!", vbInformation
+        Else
+            MsgBox "No data to copy!", vbExclamation
+        End If
+    Else
+        MsgBox "Transaction Name not found!", vbExclamation
+    End If
+End Sub
